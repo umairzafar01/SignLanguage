@@ -39,7 +39,25 @@ class _SignInScreenState extends State<SignInScreen> {
         context, MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } else {
-      setState(() => _error = 'Invalid email or password.');
+      setState(() => _error = context.read<AuthProvider>().lastError ?? 'Invalid email or password.');
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final ok = await context.read<AuthProvider>().signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (ok) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    } else {
+      setState(() => _error = context.read<AuthProvider>().lastError ?? 'Google sign in failed.');
     }
   }
 
@@ -52,6 +70,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(
@@ -135,8 +154,15 @@ class _SignInScreenState extends State<SignInScreen> {
                     label: 'Continue with Google',
                     icon: const Icon(Icons.g_mobiledata_rounded,
                         color: AppColors.text2, size: 22),
-                    onTap: () {},
+                    onTap: _googleSignIn,
                   ),
+                  if (!auth.firebaseEnabled) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Firebase is not configured yet. Add Firebase options to enable email/Google auth.',
+                      style: AppTextStyles.caption(color: AppColors.amber),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   GestureDetector(
                     onTap: _guest,

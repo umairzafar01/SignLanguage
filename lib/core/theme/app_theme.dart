@@ -28,4 +28,29 @@ class AppTheme {
     ),
     dividerColor: AppColors.border,
   );
+
+  static ThemeData get light => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xFFF7FAFC),
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.cyanDim,
+      secondary: AppColors.violet,
+      surface: Colors.white,
+      background: Color(0xFFF7FAFC),
+      error: AppColors.rose,
+    ),
+    textTheme: GoogleFonts.plusJakartaSansTextTheme(
+      ThemeData.light().textTheme,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFFF7FAFC),
+      elevation: 0,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+    ),
+    dividerColor: const Color(0x11000000),
+  );
 }

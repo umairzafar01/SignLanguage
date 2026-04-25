@@ -1,4 +1,4 @@
-package com.example.signbridge
+package sign.bridge
 
 import io.flutter.embedding.android.FlutterActivity
 

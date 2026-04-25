@@ -46,7 +46,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         (_) => false,
       );
     } else {
-      setState(() => _error = 'Please fill all fields correctly.');
+      setState(() => _error = context.read<AuthProvider>().lastError ?? 'Please fill all fields correctly.');
     }
   }
 

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/progress_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/widgets/common_widgets.dart';
+import '../text_to_sign/text_to_sign_screen.dart';
 
 class _Sign {
-  final String word, category, langs;
+  final String word, category, langs, signInput;
   final IconData icon;
   final Color color;
   bool favorite;
-  _Sign(this.word, this.category, this.langs, this.icon, this.color,
+  _Sign(this.word, this.category, this.langs, this.signInput, this.icon, this.color,
       {this.favorite = false});
 }
 
@@ -24,18 +26,21 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   final _filters = ['All', 'Greetings', 'Emotions', 'Numbers', 'Family', 'Everyday'];
 
   final _signs = [
-    _Sign('Hello', 'Greeting', 'ASL, BSL', Icons.waving_hand_rounded, AppColors.cyan, favorite: true),
-    _Sign('Love', 'Emotion', 'ASL', Icons.favorite_rounded, AppColors.rose),
-    _Sign('Thank You', 'Courtesy', 'ASL, PSL', Icons.star_rounded, AppColors.amber, favorite: true),
-    _Sign('Peace', 'Emotion', 'ASL', Icons.sentiment_satisfied_rounded, AppColors.violet),
-    _Sign('Goodbye', 'Greeting', 'ASL, BSL', Icons.back_hand_rounded, AppColors.emerald),
-    _Sign('Help', 'Everyday', 'ASL', Icons.support_rounded, AppColors.cyan),
-    _Sign('Yes', 'Everyday', 'ASL, BSL, PSL', Icons.check_circle_rounded, AppColors.emerald),
-    _Sign('No', 'Everyday', 'ASL, BSL, PSL', Icons.cancel_rounded, AppColors.rose),
-    _Sign('Mother', 'Family', 'ASL', Icons.person_rounded, AppColors.amber),
-    _Sign('Father', 'Family', 'ASL', Icons.person_2_rounded, AppColors.violet),
-    _Sign('One', 'Number', 'ASL, BSL', Icons.looks_one_rounded, AppColors.cyan),
-    _Sign('Two', 'Number', 'ASL, BSL', Icons.looks_two_rounded, AppColors.cyan),
+    _Sign('Hello', 'Greetings', 'ASL, BSL', 'HELLO', Icons.waving_hand_rounded, AppColors.cyan, favorite: true),
+    _Sign('Love', 'Emotions', 'ASL', 'LOVE', Icons.favorite_rounded, AppColors.rose),
+    _Sign('Thank You', 'Greetings', 'ASL, PSL', 'THANK YOU', Icons.star_rounded, AppColors.amber, favorite: true),
+    _Sign('Peace', 'Emotions', 'ASL', 'PEACE', Icons.sentiment_satisfied_rounded, AppColors.violet),
+    _Sign('Goodbye', 'Greetings', 'ASL, BSL', 'GOODBYE', Icons.back_hand_rounded, AppColors.emerald),
+    _Sign('Help', 'Everyday', 'ASL', 'HELP', Icons.support_rounded, AppColors.cyan),
+    _Sign('Yes', 'Everyday', 'ASL, BSL, PSL', 'YES', Icons.check_circle_rounded, AppColors.emerald),
+    _Sign('No', 'Everyday', 'ASL, BSL, PSL', 'NO', Icons.cancel_rounded, AppColors.rose),
+    _Sign('Mother', 'Family', 'ASL', 'MOTHER', Icons.person_rounded, AppColors.amber),
+    _Sign('Father', 'Family', 'ASL', 'FATHER', Icons.person_2_rounded, AppColors.violet),
+    _Sign('One', 'Numbers', 'ASL, BSL', '1', Icons.looks_one_rounded, AppColors.cyan),
+    _Sign('Two', 'Numbers', 'ASL, BSL', '2', Icons.looks_two_rounded, AppColors.cyan),
+    _Sign('Three', 'Numbers', 'ASL, BSL', '3', Icons.looks_3_rounded, AppColors.cyan),
+    _Sign('Seven', 'Numbers', 'ASL, BSL', '7', Icons.filter_7_rounded, AppColors.cyan),
+    _Sign('Ten', 'Numbers', 'ASL, BSL', '10', Icons.exposure_plus_1_rounded, AppColors.cyan),
   ];
 
   List<_Sign> get _filtered {
@@ -46,7 +51,11 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       list = list.where((s) => s.category.toLowerCase().contains(cat.toLowerCase())).toList();
     }
     if (q.isNotEmpty) {
-      list = list.where((s) => s.word.toLowerCase().contains(q)).toList();
+      list = list
+          .where((s) =>
+              s.word.toLowerCase().contains(q) ||
+              s.signInput.toLowerCase().contains(q))
+          .toList();
     }
     return list;
   }
@@ -190,7 +199,20 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                   return _DictEntry(
                     sign: s,
                     isFirst: i == 0,
-                    onFav: () => setState(() => s.favorite = !s.favorite),
+                    onTap: () {
+                      context.read<UserProgressProvider>().recordDictionaryLookup();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => TextToSignScreen(initialText: s.signInput),
+                        ),
+                      );
+                    },
+                    onFav: () {
+                      setState(() => s.favorite = !s.favorite);
+                      final saved = _signs.where((entry) => entry.favorite).length;
+                      context.read<UserProgressProvider>().setSavedSignsCount(saved);
+                    },
                   );
                 },
               ),
@@ -205,75 +227,84 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 class _DictEntry extends StatelessWidget {
   final _Sign sign;
   final bool isFirst;
+  final VoidCallback onTap;
   final VoidCallback onFav;
 
-  const _DictEntry({required this.sign, required this.isFirst, required this.onFav});
+  const _DictEntry({
+    required this.sign,
+    required this.isFirst,
+    required this.onTap,
+    required this.onFav,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isFirst ? sign.color.withOpacity(0.15) : AppColors.border2,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isFirst ? sign.color.withOpacity(0.15) : AppColors.border2,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: isFirst
-                  ? sign.color.withOpacity(0.08)
-                  : AppColors.surface2,
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(
+        child: Row(
+          children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
                 color: isFirst
-                    ? sign.color.withOpacity(0.2)
-                    : AppColors.border,
+                    ? sign.color.withOpacity(0.08)
+                    : AppColors.surface2,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(
+                  color: isFirst
+                      ? sign.color.withOpacity(0.2)
+                      : AppColors.border,
+                ),
+              ),
+              child: Icon(sign.icon, color: sign.color, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(sign.word,
+                      style: AppTextStyles.bodyMedium(color: AppColors.text1)
+                          .copyWith(fontSize: 13, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 3),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${sign.category} · ',
+                          style: AppTextStyles.caption(),
+                        ),
+                        TextSpan(
+                          text: sign.langs,
+                          style: AppTextStyles.caption(color: AppColors.cyan)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Icon(sign.icon, color: sign.color, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(sign.word,
-                    style: AppTextStyles.bodyMedium(color: AppColors.text1)
-                        .copyWith(fontSize: 13, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 3),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${sign.category} · ',
-                        style: AppTextStyles.caption(),
-                      ),
-                      TextSpan(
-                        text: sign.langs,
-                        style: AppTextStyles.caption(color: AppColors.cyan)
-                            .copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            GestureDetector(
+              onTap: onFav,
+              child: Icon(
+                sign.favorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: sign.favorite ? AppColors.amber : AppColors.text3,
+                size: 20,
+              ),
             ),
-          ),
-          GestureDetector(
-            onTap: onFav,
-            child: Icon(
-              sign.favorite ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: sign.favorite ? AppColors.amber : AppColors.text3,
-              size: 20,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

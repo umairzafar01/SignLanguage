@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/progress_provider.dart';
+import '../auth/auth_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/common_widgets.dart';
@@ -8,6 +11,8 @@ class ProgressScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progress = context.watch<UserProgressProvider>();
+    final auth = context.watch<AuthProvider>();
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -26,13 +31,20 @@ class ProgressScreen extends StatelessWidget {
 
                     // Stats row
                     Row(
-                      children: const [
-                        Expanded(child: _StatCard('142', 'Translations', AppColors.cyan)),
-                        SizedBox(width: 10),
-                        Expanded(child: _StatCard('7', 'Day Streak', AppColors.amber)),
-                        SizedBox(width: 10),
-                        Expanded(child: _StatCard('38', 'Saved', AppColors.violet)),
+                      children: [
+                        Expanded(child: _StatCard('${progress.translations}', 'Translations', AppColors.cyan)),
+                        const SizedBox(width: 10),
+                        Expanded(child: _StatCard('${progress.dayStreak}', 'Day Streak', AppColors.amber)),
+                        const SizedBox(width: 10),
+                        Expanded(child: _StatCard('${progress.savedSigns}', 'Saved', AppColors.violet)),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      auth.isAuthenticated
+                          ? 'Synced with your Firebase account'
+                          : 'Guest mode: progress saved locally on this device',
+                      style: AppTextStyles.caption(color: AppColors.text3),
                     ),
                     const SizedBox(height: 20),
 
@@ -53,16 +65,16 @@ class ProgressScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           ProgressRow(label: 'Sign to Text',
-                              value: 0.78, color: AppColors.cyan),
+                              value: progress.moduleProgress['Sign to Text'] ?? 0.0, color: AppColors.cyan),
                           const SizedBox(height: 12),
                           ProgressRow(label: 'Text to Sign',
-                              value: 0.45, color: AppColors.rose),
+                              value: progress.moduleProgress['Text to Sign'] ?? 0.0, color: AppColors.rose),
                           const SizedBox(height: 12),
                           ProgressRow(label: 'Speech to Text',
-                              value: 0.60, color: AppColors.violet),
+                              value: progress.moduleProgress['Speech to Text'] ?? 0.0, color: AppColors.violet),
                           const SizedBox(height: 12),
                           ProgressRow(label: 'AI Dictionary',
-                              value: 0.62, color: AppColors.amber),
+                              value: progress.moduleProgress['AI Dictionary'] ?? 0.0, color: AppColors.amber),
                         ],
                       ),
                     ),
@@ -85,7 +97,7 @@ class ProgressScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          _WeeklyChart(),
+                          _WeeklyChart(values: progress.weeklyActivity),
                         ],
                       ),
                     ),
@@ -100,7 +112,7 @@ class ProgressScreen extends StatelessWidget {
                       color: AppColors.amber,
                       title: '7-Day Streak',
                       subtitle: 'Translated every day for a week',
-                      earned: true,
+                      earned: progress.dayStreak >= 7,
                     ),
                     const SizedBox(height: 8),
                     _AchievementRow(
@@ -108,7 +120,7 @@ class ProgressScreen extends StatelessWidget {
                       color: AppColors.cyan,
                       title: '100 Signs',
                       subtitle: 'Translated 100 signs successfully',
-                      earned: true,
+                      earned: progress.translations >= 100,
                     ),
                     const SizedBox(height: 8),
                     _AchievementRow(
@@ -116,8 +128,8 @@ class ProgressScreen extends StatelessWidget {
                       color: AppColors.violet,
                       title: 'Dictionary Master',
                       subtitle: 'Save 50 signs to your dictionary',
-                      earned: false,
-                      progress: 38 / 50,
+                      earned: progress.savedSigns >= 50,
+                      progress: (progress.savedSigns / 50).clamp(0.0, 1.0),
                     ),
                     const SizedBox(height: 8),
                     _AchievementRow(
@@ -125,8 +137,8 @@ class ProgressScreen extends StatelessWidget {
                       color: AppColors.rose,
                       title: '30-Day Champion',
                       subtitle: 'Maintain a 30-day streak',
-                      earned: false,
-                      progress: 7 / 30,
+                      earned: progress.dayStreak >= 30,
+                      progress: (progress.dayStreak / 30).clamp(0.0, 1.0),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -169,18 +181,21 @@ class _StatCard extends StatelessWidget {
 }
 
 class _WeeklyChart extends StatelessWidget {
-  final _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  final _values = [0.4, 0.7, 0.5, 0.9, 0.6, 0.3, 0.8];
-  final _today = 6; // Sun
+  final List<double> values;
+  const _WeeklyChart({required this.values});
+
+  static const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   Widget build(BuildContext context) {
+    final today = DateTime.now().weekday - 1;
+    final data = values.length == 7 ? values : List<double>.filled(7, 0.0);
     return SizedBox(
       height: 100,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: List.generate(_days.length, (i) {
-          final isToday = i == _today;
+          final isToday = i == today;
           return Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -190,7 +205,7 @@ class _WeeklyChart extends StatelessWidget {
                   AnimatedContainer(
                     duration: Duration(milliseconds: 600 + i * 80),
                     curve: Curves.easeOut,
-                    height: _values[i] * 70,
+                    height: data[i] * 70,
                     decoration: BoxDecoration(
                       color: isToday
                           ? AppColors.cyan

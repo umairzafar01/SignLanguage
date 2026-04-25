@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/providers/app_preferences_provider.dart';
+import '../../core/providers/progress_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/common_widgets.dart';
@@ -13,6 +15,8 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final prefs = context.watch<AppPreferencesProvider>();
+    final progress = context.watch<UserProgressProvider>();
     final name = auth.userName.isEmpty ? 'Ahmad Raza' : auth.userName;
     final email = auth.userEmail.isEmpty ? 'ahmad@email.com' : auth.userEmail;
 
@@ -123,11 +127,11 @@ class ProfileScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            _StatPill('142', 'Translated', AppColors.cyan),
+                            _StatPill('${progress.translations}', 'Translated', AppColors.cyan),
                             const SizedBox(width: 8),
-                            _StatPill('7', 'Day Streak', AppColors.amber),
+                            _StatPill('${progress.dayStreak}', 'Day Streak', AppColors.amber),
                             const SizedBox(width: 8),
-                            _StatPill('38', 'Saved Signs', AppColors.violet),
+                            _StatPill('${progress.savedSigns}', 'Saved Signs', AppColors.violet),
                           ],
                         ),
                       ],
@@ -152,16 +156,47 @@ class ProfileScreen extends StatelessWidget {
                           Text('LEARNING PROGRESS', style: AppTextStyles.label()),
                           const SizedBox(height: 14),
                           ProgressRow(label: 'Sign to Text',
-                              value: 0.78, color: AppColors.cyan),
+                              value: progress.moduleProgress['Sign to Text'] ?? 0.0, color: AppColors.cyan),
                           const SizedBox(height: 12),
                           ProgressRow(label: 'Text to Sign',
-                              value: 0.45, color: AppColors.rose),
+                              value: progress.moduleProgress['Text to Sign'] ?? 0.0, color: AppColors.rose),
                           const SizedBox(height: 12),
                           ProgressRow(label: 'AI Dictionary',
-                              value: 0.62, color: AppColors.violet),
+                              value: progress.moduleProgress['AI Dictionary'] ?? 0.0, color: AppColors.violet),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    if (prefs.aiSuggestions)
+                      GlassCard(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('AI SUGGESTIONS', style: AppTextStyles.label()),
+                            const SizedBox(height: 10),
+                            ...progress.aiSuggestions().map(
+                                  (tip) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 3),
+                                          child: Icon(Icons.auto_awesome_rounded,
+                                              color: AppColors.violet, size: 14),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(tip, style: AppTextStyles.caption()),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 20),
 
                     // Account settings
@@ -201,7 +236,10 @@ class ProfileScreen extends StatelessWidget {
                           color: AppColors.rose, size: 16),
                       iconBg: AppColors.rose.withOpacity(0.1),
                       label: 'Notifications',
-                      trailing: AppToggle(value: true, onChanged: (_) {}),
+                      trailing: AppToggle(
+                        value: prefs.notifications,
+                        onChanged: prefs.setNotifications,
+                      ),
                     ),
                     const SizedBox(height: 20),
 

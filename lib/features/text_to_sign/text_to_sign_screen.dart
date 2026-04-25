@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/progress_provider.dart';
+import '../../core/services/sign_assets_mapper.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/common_widgets.dart';
 import '../../core/services/speech_to_text_service.dart';
 
 class TextToSignScreen extends StatefulWidget {
-  const TextToSignScreen({super.key});
+  final String initialText;
+  const TextToSignScreen({super.key, this.initialText = 'Hello world'});
   @override
   State<TextToSignScreen> createState() => _TextToSignScreenState();
 }
 
 class _TextToSignScreenState extends State<TextToSignScreen>
     with SingleTickerProviderStateMixin {
-  final _ctrl = TextEditingController(text: 'Hello world');
+  late final TextEditingController _ctrl;
   final SpeechToTextService _speechService = SpeechToTextService();
   final List<String> _resolvedSigns = <String>[];
   final List<String> _resolvedChars = <String>[];
@@ -26,49 +30,10 @@ class _TextToSignScreenState extends State<TextToSignScreen>
   late AnimationController _cursorCtrl;
   final _langs = ['ASL', 'BSL', 'PSL'];
 
-  static const Map<String, String> _handSignsMap = {
-    'A': 'assets/signlanguage/A.jpg',
-    'B': 'assets/signlanguage/B.jpg',
-    'C': 'assets/signlanguage/C.jpg',
-    'D': 'assets/signlanguage/D.jpg',
-    'E': 'assets/signlanguage/E.jpg',
-    'F': 'assets/signlanguage/F.jpg',
-    'G': 'assets/signlanguage/G.jpg',
-    'H': 'assets/signlanguage/H.jpg',
-    'I': 'assets/signlanguage/I.jpg',
-    'J': 'assets/signlanguage/J.jpg',
-    'K': 'assets/signlanguage/K.jpg',
-    'L': 'assets/signlanguage/L.jpg',
-    'M': 'assets/signlanguage/M.jpg',
-    'N': 'assets/signlanguage/N.jpg',
-    'O': 'assets/signlanguage/O.jpg',
-    'P': 'assets/signlanguage/P.jpg',
-    'Q': 'assets/signlanguage/Q.jpg',
-    'R': 'assets/signlanguage/R.jpg',
-    'S': 'assets/signlanguage/S.jpg',
-    'T': 'assets/signlanguage/T.jpg',
-    'U': 'assets/signlanguage/U.jpg',
-    'V': 'assets/signlanguage/V.jpg',
-    'W': 'assets/signlanguage/W.jpg',
-    'X': 'assets/signlanguage/X.jpg',
-    'Y': 'assets/signlanguage/Y.jpg',
-    'Z': 'assets/signlanguage/Z.jpg',
-    ' ': 'assets/signlanguage/space.jpg',
-    '0': 'assets/signlanguage/numbers/0.jpg',
-    '1': 'assets/signlanguage/numbers/1.jpg',
-    '2': 'assets/signlanguage/numbers/2.jpg',
-    '3': 'assets/signlanguage/numbers/3.jpg',
-    '4': 'assets/signlanguage/numbers/4.jpg',
-    '5': 'assets/signlanguage/numbers/5.jpg',
-    '6': 'assets/signlanguage/numbers/6.jpg',
-    '7': 'assets/signlanguage/numbers/7.jpg',
-    '8': 'assets/signlanguage/numbers/8.jpg',
-    '9': 'assets/signlanguage/numbers/9.jpg',
-  };
-
   @override
   void initState() {
     super.initState();
+    _ctrl = TextEditingController(text: widget.initialText);
     _cursorCtrl = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
@@ -108,18 +73,10 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     final normalized = value.toUpperCase();
     _resolvedSigns
       ..clear()
-      ..addAll([]);
+      ..addAll(SignAssetsMapper.toAssets(normalized));
     _resolvedChars
       ..clear()
-      ..addAll([]);
-
-    for (final char in normalized.split('')) {
-      final asset = _handSignsMap[char];
-      if (asset != null) {
-        _resolvedSigns.add(asset);
-        _resolvedChars.add(char);
-      }
-    }
+      ..addAll(SignAssetsMapper.supportedCharacters(normalized));
 
     if (_signIndex >= _resolvedSigns.length) {
       _signIndex = 0;
@@ -184,6 +141,11 @@ class _TextToSignScreenState extends State<TextToSignScreen>
       return;
     }
     setState(() => _playing = !_playing);
+    if (_playing) {
+      context
+          .read<UserProgressProvider>()
+          .recordTextToSignTranslation(characters: _resolvedChars.length);
+    }
     if (_playing) {
       Future.delayed(const Duration(seconds: 2), () {
         if (!mounted) return;

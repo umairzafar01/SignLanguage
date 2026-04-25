@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/progress_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/common_widgets.dart';
@@ -92,6 +94,14 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
               : result.recognizedWords;
           if (result.finalResult) {
             _updateElapsed();
+            final words = result.recognizedWords
+                .trim()
+                .split(RegExp(r'\s+'))
+                .where((w) => w.isNotEmpty)
+                .length;
+            context
+                .read<UserProgressProvider>()
+                .recordSpeechToTextUsage(words: words);
           }
         });
       },

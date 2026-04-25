@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/app_preferences_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/common_widgets.dart';
@@ -10,16 +12,18 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _darkMode = true;
   bool _realtimeMode = true;
-  bool _aiSuggestions = true;
   bool _analytics = false;
-  bool _notifications = true;
-  String _signLanguage = 'ASL (American)';
   String _confidence = 'High — above 85%';
 
   @override
   Widget build(BuildContext context) {
+    final prefs = context.watch<AppPreferencesProvider>();
+    final themeLabel = switch (prefs.themeMode) {
+      ThemeMode.dark => 'Dark',
+      ThemeMode.light => 'Light',
+      ThemeMode.system => 'System',
+    };
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
@@ -64,10 +68,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: const Icon(Icons.dark_mode_rounded,
                         color: AppColors.text2, size: 16),
                     iconBg: AppColors.surface3,
-                    label: 'Dark Mode',
-                    trailing: AppToggle(
-                        value: _darkMode,
-                        onChanged: (v) => setState(() => _darkMode = v)),
+                    label: 'Theme Mode',
+                    sublabel: themeLabel,
+                    onTap: () => _showPicker(
+                      context,
+                      'Theme Mode',
+                      const ['Dark', 'Light', 'System'],
+                      themeLabel == 'Dark' ? 0 : (themeLabel == 'Light' ? 1 : 2),
+                      onSelect: (val) {
+                        final mode = switch (val) {
+                          'Light' => ThemeMode.light,
+                          'System' => ThemeMode.system,
+                          _ => ThemeMode.dark,
+                        };
+                        prefs.setThemeMode(mode);
+                      },
+                    ),
                   ),
                   SettingsItem(
                     icon: const Icon(Icons.text_fields_rounded,
@@ -87,15 +103,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: AppColors.cyan, size: 16),
                     iconBg: AppColors.cyan.withOpacity(0.1),
                     label: 'Sign Language',
-                    sublabel: _signLanguage,
+                    sublabel: prefs.signLanguage,
                     onTap: () => _showPicker(
                         context,
                         'Sign Language',
                         ['ASL (American)', 'BSL (British)', 'PSL (Pakistani)',
                           'ISL (Indian)'],
                         0,
-                        onSelect: (val) =>
-                            setState(() => _signLanguage = val)),
+                        onSelect: prefs.setSignLanguage),
                   ),
                   SettingsItem(
                     icon: const Icon(Icons.my_location_rounded,
@@ -133,8 +148,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label: 'AI Suggestions',
                     sublabel: 'Contextual recommendations',
                     trailing: AppToggle(
-                        value: _aiSuggestions,
-                        onChanged: (v) => setState(() => _aiSuggestions = v)),
+                        value: prefs.aiSuggestions,
+                        onChanged: prefs.setAiSuggestions),
                   ),
                   SettingsItem(
                     icon: const Icon(Icons.bar_chart_rounded,
@@ -155,8 +170,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     iconBg: AppColors.amber.withOpacity(0.1),
                     label: 'Push Notifications',
                     trailing: AppToggle(
-                        value: _notifications,
-                        onChanged: (v) => setState(() => _notifications = v)),
+                        value: prefs.notifications,
+                        onChanged: prefs.setNotifications),
                   ),
                   SettingsItem(
                     icon: const Icon(Icons.local_fire_department_rounded,

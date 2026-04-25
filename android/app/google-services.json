@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "801777504136",
+    "project_id": "signbridge-b3323",
+    "storage_bucket": "signbridge-b3323.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801777504136:android:1271fcd8a4cdc9b44df43d",
+        "android_client_info": {
+          "package_name": "sign.bridge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAE0_8vEu9Wp2BLkdQ7ZpO3nssdnrlbb8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
