@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/progress_provider.dart';
 import '../../core/services/sign_assets_mapper.dart';
+import '../../core/services/text_to_speech_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/common_widgets.dart';
@@ -19,12 +20,14 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     with SingleTickerProviderStateMixin {
   late final TextEditingController _ctrl;
   final SpeechToTextService _speechService = SpeechToTextService();
+  final TextToSpeechService _ttsService = TextToSpeechService();
   final List<String> _resolvedSigns = <String>[];
   final List<String> _resolvedChars = <String>[];
   int _langIndex = 0;
   bool _playing = false;
   bool _listening = false;
   bool _speechReady = false;
+  bool _speaking = false;
   String _speechStatus = 'Preparing mic...';
   int _signIndex = 0;
   late AnimationController _cursorCtrl;
@@ -39,6 +42,33 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     )..repeat(reverse: true);
     _syncSignsFromText(_ctrl.text);
     _initializeSpeech();
+    _initializeTts();
+  }
+
+  Future<void> _initializeTts() async {
+    await _ttsService.initialize();
+  }
+
+  Future<void> _toggleSpeak() async {
+    final text = _ctrl.text.trim();
+    if (text.isEmpty) {
+      _showSnack('Enter text first to speak.');
+      return;
+    }
+
+    if (_speaking) {
+      await _ttsService.stop();
+      setState(() => _speaking = false);
+      return;
+    }
+
+    setState(() => _speaking = true);
+    await _ttsService.speak(text);
+    // Wait for speech to complete
+    await Future.delayed(Duration(seconds: text.length ~/ 3 + 1));
+    if (mounted) {
+      setState(() => _speaking = false);
+    }
   }
 
   Future<void> _initializeSpeech() async {
@@ -88,6 +118,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
   @override
   void dispose() {
     _speechService.cancelListening();
+    _ttsService.dispose();
     _ctrl.dispose();
     _cursorCtrl.dispose();
     super.dispose();
@@ -238,6 +269,18 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                               onTap: _copyText,
                               child: const Icon(Icons.copy_rounded,
                                   color: AppColors.text3, size: 18),
+                            ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: _toggleSpeak,
+                              child: Icon(
+                                _speaking
+                                    ? Icons.stop_rounded
+                                    : Icons.volume_up_rounded,
+                                color:
+                                    _speaking ? AppColors.rose : AppColors.text3,
+                                size: 18,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             GestureDetector(

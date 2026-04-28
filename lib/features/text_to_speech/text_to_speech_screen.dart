@@ -72,6 +72,10 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final inputTextColor = isLight ? LightColors.text1 : AppColors.text1;
+    final inputHintColor = isLight ? LightColors.text4 : AppColors.text4;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -125,13 +129,13 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen>
                             maxLines: 4,
                             maxLength: 500,
                             style: AppTextStyles.body(
-                                    color: AppColors.text1, size: 14)
+                                    color: inputTextColor, size: 14)
                                 .copyWith(height: 1.6),
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               counterStyle: AppTextStyles.caption(),
                               hintText: 'Enter text to speak…',
-                              hintStyle: AppTextStyles.body(color: AppColors.text4),
+                              hintStyle: AppTextStyles.body(color: inputHintColor),
                               contentPadding: EdgeInsets.zero,
                               isDense: true,
                             ),

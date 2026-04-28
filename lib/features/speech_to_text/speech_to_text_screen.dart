@@ -89,19 +89,27 @@ class _SpeechToTextScreenState extends State<SpeechToTextScreen>
       onResult: (result) {
         if (!mounted) return;
         setState(() {
-          _transcript = result.recognizedWords.isEmpty
-              ? 'Listening...'
-              : result.recognizedWords;
+          // Always update transcript with recognized words
+          if (result.recognizedWords.isNotEmpty) {
+            _transcript = result.recognizedWords;
+            _statusText = 'Processing...';
+          } else if (_listening) {
+            _transcript = 'Listening...';
+            _statusText = 'Listening...';
+          }
+          // When we get a final result
           if (result.finalResult) {
-            _updateElapsed();
+            _statusText = 'Completed';
             final words = result.recognizedWords
                 .trim()
                 .split(RegExp(r'\s+'))
                 .where((w) => w.isNotEmpty)
                 .length;
-            context
-                .read<UserProgressProvider>()
-                .recordSpeechToTextUsage(words: words);
+            if (words > 0) {
+              context
+                  .read<UserProgressProvider>()
+                  .recordSpeechToTextUsage(words: words);
+            }
           }
         });
       },

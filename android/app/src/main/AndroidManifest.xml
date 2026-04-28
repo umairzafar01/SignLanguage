@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Microphone permission for speech-to-text -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Internet permission for cloud speech services -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
     <application
         android:label="signbridge"
         android:name="${applicationName}"

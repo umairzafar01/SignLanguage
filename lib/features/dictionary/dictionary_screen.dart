@@ -104,6 +104,20 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               child: Row(
                 children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 34, height: 34,
+                      decoration: BoxDecoration(
+                        color: isLight ? LightColors.surface : AppColors.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: isLight ? LightColors.border : AppColors.border),
+                      ),
+                      child: const Icon(Icons.arrow_back_ios_new_rounded,
+                          color: AppColors.text2, size: 13),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

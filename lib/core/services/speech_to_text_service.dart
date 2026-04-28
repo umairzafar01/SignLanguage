@@ -14,7 +14,7 @@ class SpeechToTextService {
     _initialized = await _speech.initialize(
       onStatus: onStatus,
       onError: (error) => onError(error.errorMsg),
-      debugLogging: false,
+      debugLogging: true,
     );
     return _initialized;
   }
@@ -28,10 +28,12 @@ class SpeechToTextService {
     await _speech.listen(
       onResult: onResult,
       localeId: 'en_US',
+      listenFor: Duration(seconds: 30),
+      pauseFor: Duration(seconds: 3),
       listenOptions: SpeechListenOptions(
         partialResults: true,
-        listenMode: ListenMode.confirmation,
-        cancelOnError: true,
+        listenMode: ListenMode.dictation,
+        cancelOnError: false,
       ),
     );
   }
