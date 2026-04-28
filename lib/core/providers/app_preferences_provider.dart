@@ -6,8 +6,9 @@ class AppPreferencesProvider extends ChangeNotifier {
   static const _aiSuggestionsKey = 'pref_ai_suggestions';
   static const _notificationsKey = 'pref_notifications';
   static const _signLanguageKey = 'pref_sign_language';
+  static const _migrationKey = 'pref_migration_v2'; // light-theme migration
 
-  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode _themeMode = ThemeMode.light; // default: light
   bool _aiSuggestions = true;
   bool _notifications = true;
   String _signLanguage = 'ASL (American)';
@@ -19,7 +20,19 @@ class AppPreferencesProvider extends ChangeNotifier {
 
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    _themeMode = _decodeTheme(prefs.getString(_themeKey));
+
+    // ── Migration: reset theme to light if user never explicitly chose one
+    //    (clears the old dark default that was stored by the previous build)
+    final migrated = prefs.getBool(_migrationKey) ?? false;
+    if (!migrated) {
+      await prefs.remove(_themeKey); // wipe old dark default
+      await prefs.setBool(_migrationKey, true);
+    }
+
+    final stored = prefs.getString(_themeKey);
+    if (stored != null) {
+      _themeMode = _decodeTheme(stored);
+    }
     _aiSuggestions = prefs.getBool(_aiSuggestionsKey) ?? true;
     _notifications = prefs.getBool(_notificationsKey) ?? true;
     _signLanguage = prefs.getString(_signLanguageKey) ?? 'ASL (American)';
@@ -32,6 +45,14 @@ class AppPreferencesProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeKey, _encodeTheme(mode));
   }
+
+  /// Toggle between light and dark
+  Future<void> toggleTheme() async {
+    final next = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    await setThemeMode(next);
+  }
+
+  bool get isDark => _themeMode == ThemeMode.dark;
 
   Future<void> setAiSuggestions(bool value) async {
     _aiSuggestions = value;
@@ -54,26 +75,26 @@ class AppPreferencesProvider extends ChangeNotifier {
     await prefs.setString(_signLanguageKey, value);
   }
 
-  ThemeMode _decodeTheme(String? raw) {
+  ThemeMode _decodeTheme(String raw) {
     switch (raw) {
-      case 'light':
-        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
       case 'system':
         return ThemeMode.system;
-      case 'dark':
+      case 'light':
       default:
-        return ThemeMode.dark;
+        return ThemeMode.light;
     }
   }
 
   String _encodeTheme(ThemeMode mode) {
     switch (mode) {
-      case ThemeMode.light:
-        return 'light';
-      case ThemeMode.system:
-        return 'system';
       case ThemeMode.dark:
         return 'dark';
+      case ThemeMode.system:
+        return 'system';
+      case ThemeMode.light:
+        return 'light';
     }
   }
 }

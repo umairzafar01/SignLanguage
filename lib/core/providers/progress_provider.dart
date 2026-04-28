@@ -59,6 +59,15 @@ class UserProgressProvider extends ChangeNotifier {
     await _persist();
   }
 
+  Future<void> recordSignToTextTranslation({required int words}) async {
+    if (words <= 0) return;
+    _translations += 1;
+    _increaseModuleProgress('Sign to Text', (words / 40).clamp(0.02, 0.12));
+    _recordDailyActivity((words / 60).clamp(0.03, 0.2));
+    _touchStreak();
+    await _persist();
+  }
+
   Future<void> recordDictionaryLookup() async {
     _increaseModuleProgress('AI Dictionary', 0.02);
     _recordDailyActivity(0.02);
@@ -154,7 +163,7 @@ class UserProgressProvider extends ChangeNotifier {
 
   Future<void> _loadLocal() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_localStorageKey);
+    final raw = prefs.getString(_storageKeyForCurrentUser());
     if (raw == null || raw.isEmpty) {
       _resetDefaults();
       return;
@@ -177,7 +186,7 @@ class UserProgressProvider extends ChangeNotifier {
 
   Future<void> _persistLocal() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_localStorageKey, jsonEncode(_toMap()));
+    await prefs.setString(_storageKeyForCurrentUser(), jsonEncode(_toMap()));
   }
 
   Future<void> _persistCloud() async {
@@ -241,5 +250,11 @@ class UserProgressProvider extends ChangeNotifier {
     _moduleProgress = Map<String, double>.from(_moduleDefaults);
     _weeklyActivity = List<double>.filled(7, 0.0);
     _lastActiveAt = null;
+  }
+
+  String _storageKeyForCurrentUser() {
+    final uid = _userId;
+    if (uid == null || uid.isEmpty) return _localStorageKey;
+    return '${_localStorageKey}_$uid';
   }
 }

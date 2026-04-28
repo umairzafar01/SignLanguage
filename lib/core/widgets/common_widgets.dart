@@ -2,7 +2,56 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
-// ─── Glass Card
+// ─── Helpers ────────────────────────────────────────────────
+
+bool _isLight(BuildContext ctx) =>
+    Theme.of(ctx).brightness == Brightness.light;
+
+Color _surface(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.surface
+    : AppColors.surface;
+
+Color _surface2(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.surface2
+    : AppColors.surface2;
+
+Color _surface3(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.surface2
+    : AppColors.surface3;
+
+Color _border(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.border
+    : AppColors.border;
+
+Color _border2(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.border2
+    : AppColors.border2;
+
+Color _primary(BuildContext ctx) =>
+    Theme.of(ctx).colorScheme.primary;
+
+Color _text1(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.text1
+    : AppColors.text1;
+
+Color _text2(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.text2
+    : AppColors.text2;
+
+Color _text3(BuildContext ctx) => _isLight(ctx)
+    ? LightColors.text3
+    : AppColors.text3;
+
+List<BoxShadow> _cardShadow(BuildContext ctx) => _isLight(ctx)
+    ? const [
+        BoxShadow(
+            color: LightColors.shadow,
+            blurRadius: 16,
+            offset: Offset(0, 2)),
+      ]
+    : [];
+
+// ─── Glass Card ─────────────────────────────────────────────
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets? padding;
@@ -21,22 +70,24 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bg = background ?? _surface(context);
     return Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: background ?? AppColors.surface,
+        color: bg,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: borderColor ?? AppColors.border,
+          color: borderColor ?? _border(context),
           width: 1,
         ),
+        boxShadow: _cardShadow(context),
       ),
       child: child,
     );
   }
 }
 
-// ─── Primary Button
+// ─── Primary Button ─────────────────────────────────────────
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -55,17 +106,21 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final btnColor = color ?? _primary(context);
+    final onColor = textColor ??
+        (_isLight(context) ? Colors.white : const Color(0xFF021015));
     return GestureDetector(
       onTap: loading ? null : onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
-          color: color ?? AppColors.cyan,
+          color: btnColor,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: (color ?? AppColors.cyan).withOpacity(0.25),
+              color: btnColor.withOpacity(0.28),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -74,19 +129,18 @@ class PrimaryButton extends StatelessWidget {
         child: loading
             ? Center(
                 child: SizedBox(
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: textColor ?? const Color(0xFF021015),
+                    color: onColor,
                   ),
                 ),
               )
             : Center(
                 child: Text(
                   label,
-                  style: AppTextStyles.subheading(
-                    color: textColor ?? const Color(0xFF021015),
-                  ),
+                  style: AppTextStyles.subheading(color: onColor),
                 ),
               ),
       ),
@@ -94,7 +148,7 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
-// ─── Secondary Button
+// ─── Secondary Button ────────────────────────────────────────
 class SecondaryButton extends StatelessWidget {
   final String label;
   final Widget? icon;
@@ -115,15 +169,24 @@ class SecondaryButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: _surface2(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: _border(context)),
+          boxShadow: _isLight(context)
+              ? [
+                  const BoxShadow(
+                      color: LightColors.shadow,
+                      blurRadius: 8,
+                      offset: Offset(0, 1))
+                ]
+              : [],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[icon!, const SizedBox(width: 8)],
-            Text(label, style: AppTextStyles.bodyMedium(color: AppColors.text2)),
+            Text(label,
+                style: AppTextStyles.bodyMedium(color: _text2(context))),
           ],
         ),
       ),
@@ -131,7 +194,7 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
-// ─── Input Field
+// ─── Input Field ─────────────────────────────────────────────
 class AppTextField extends StatefulWidget {
   final String label;
   final String hint;
@@ -140,6 +203,7 @@ class AppTextField extends StatefulWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final TextInputType keyboardType;
+  final void Function(String)? onChanged;
 
   const AppTextField({
     super.key,
@@ -150,6 +214,7 @@ class AppTextField extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.keyboardType = TextInputType.text,
+    this.onChanged,
   });
 
   @override
@@ -161,40 +226,54 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = _primary(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label.toUpperCase(), style: AppTextStyles.label()),
+        Text(
+          widget.label.toUpperCase(),
+          style: AppTextStyles.labelOf(context),
+        ),
         const SizedBox(height: 8),
         Focus(
           onFocusChange: (f) => setState(() => _focused = f),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: AppColors.surface2,
+              color: _surface(context),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _focused
-                    ? AppColors.cyan.withOpacity(0.5)
-                    : AppColors.border,
+                    ? primary.withOpacity(0.6)
+                    : _border(context),
+                width: _focused ? 1.5 : 1,
               ),
               boxShadow: _focused
-                  ? [BoxShadow(color: AppColors.cyan.withOpacity(0.06), blurRadius: 12, spreadRadius: 3)]
-                  : [],
+                  ? [
+                      BoxShadow(
+                          color: primary.withOpacity(0.08),
+                          blurRadius: 12,
+                          spreadRadius: 2)
+                    ]
+                  : _cardShadow(context),
             ),
             child: TextField(
               controller: widget.controller,
               obscureText: widget.obscure,
               keyboardType: widget.keyboardType,
-              style: AppTextStyles.body(color: AppColors.text1),
+              onChanged: widget.onChanged,
+              style: AppTextStyles.body(color: _text1(context)),
               decoration: InputDecoration(
                 hintText: widget.hint,
-                hintStyle: AppTextStyles.body(color: AppColors.text4),
+                hintStyle: AppTextStyles.body(color: _text3(context)),
                 prefixIcon: widget.prefixIcon,
                 suffixIcon: widget.suffixIcon,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14,
+                  horizontal: 16,
+                  vertical: 14,
                 ),
               ),
             ),
@@ -205,7 +284,7 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 }
 
-// ─── Status Badge
+// ─── Status Badge ────────────────────────────────────────────
 class StatusBadge extends StatelessWidget {
   final String label;
   final Color color;
@@ -223,9 +302,9 @@ class StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -278,7 +357,8 @@ class _PulsingDotState extends State<_PulsingDot>
     return FadeTransition(
       opacity: _anim,
       child: Container(
-        width: 5, height: 5,
+        width: 5,
+        height: 5,
         decoration: BoxDecoration(
           color: widget.color,
           shape: BoxShape.circle,
@@ -288,7 +368,7 @@ class _PulsingDotState extends State<_PulsingDot>
   }
 }
 
-// ─── Section Label
+// ─── Section Label ───────────────────────────────────────────
 class SectionLabel extends StatelessWidget {
   final String text;
   const SectionLabel(this.text, {super.key});
@@ -297,32 +377,33 @@ class SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(text.toUpperCase(), style: AppTextStyles.label()),
+      child: Text(text.toUpperCase(), style: AppTextStyles.labelOf(context)),
     );
   }
 }
 
-// ─── Divider with text
+// ─── Divider with text ───────────────────────────────────────
 class TextDivider extends StatelessWidget {
   final String text;
   const TextDivider(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
+    final dividerColor = _border(context);
     return Row(
       children: [
-        Expanded(child: Container(height: 1, color: AppColors.border)),
+        Expanded(child: Container(height: 1, color: dividerColor)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(text, style: AppTextStyles.label()),
+          child: Text(text, style: AppTextStyles.labelOf(context)),
         ),
-        Expanded(child: Container(height: 1, color: AppColors.border)),
+        Expanded(child: Container(height: 1, color: dividerColor)),
       ],
     );
   }
 }
 
-// ─── Progress Row
+// ─── Progress Row ────────────────────────────────────────────
 class ProgressRow extends StatelessWidget {
   final String label;
   final double value;
@@ -342,19 +423,22 @@ class ProgressRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: AppTextStyles.bodyMedium()),
-            Text('${(value * 100).toInt()}%',
-                style: AppTextStyles.subheading(color: color).copyWith(fontSize: 12)),
+            Text(label, style: AppTextStyles.bodyMediumOf(context)),
+            Text(
+              '${(value * 100).toInt()}%',
+              style: AppTextStyles.bodyMedium(color: color)
+                  .copyWith(fontSize: 12),
+            ),
           ],
         ),
         const SizedBox(height: 7),
         ClipRRect(
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: value,
-            backgroundColor: AppColors.surface3,
+            backgroundColor: _surface2(context),
             valueColor: AlwaysStoppedAnimation(color),
-            minHeight: 4,
+            minHeight: 6,
           ),
         ),
       ],
@@ -362,7 +446,7 @@ class ProgressRow extends StatelessWidget {
   }
 }
 
-// ─── Settings Item
+// ─── Settings Item ───────────────────────────────────────────
 class SettingsItem extends StatelessWidget {
   final Widget icon;
   final Color iconBg;
@@ -388,20 +472,22 @@ class SettingsItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: _surface(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border2),
+          border: Border.all(color: _border2(context)),
+          boxShadow: _cardShadow(context),
         ),
         child: Row(
           children: [
             Container(
-              width: 36, height: 36,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: iconBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(11),
               ),
               child: icon,
             ),
@@ -413,19 +499,20 @@ class SettingsItem extends StatelessWidget {
                   Text(
                     label,
                     style: AppTextStyles.bodyMedium(
-                      color: labelColor ?? AppColors.text1,
+                      color: labelColor ?? _text1(context),
                     ).copyWith(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                   if (sublabel != null) ...[
                     const SizedBox(height: 2),
-                    Text(sublabel!, style: AppTextStyles.caption()),
+                    Text(sublabel!,
+                        style: AppTextStyles.captionOf(context)),
                   ],
                 ],
               ),
             ),
             trailing ??
                 Icon(Icons.chevron_right_rounded,
-                    color: AppColors.text3, size: 18),
+                    color: _text3(context), size: 18),
           ],
         ),
       ),
@@ -433,7 +520,7 @@ class SettingsItem extends StatelessWidget {
   }
 }
 
-// ─── Toggle Switch
+// ─── Toggle Switch ───────────────────────────────────────────
 class AppToggle extends StatefulWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -474,6 +561,10 @@ class _AppToggleState extends State<AppToggle>
 
   @override
   Widget build(BuildContext context) {
+    final primary = _primary(context);
+    final offColor = _isLight(context)
+        ? const Color(0xFFCBD5E0)
+        : AppColors.surface3;
     return GestureDetector(
       onTap: () => widget.onChanged(!widget.value),
       child: AnimatedBuilder(
@@ -481,12 +572,17 @@ class _AppToggleState extends State<AppToggle>
         builder: (_, __) {
           final on = _anim.value > 0.5;
           return Container(
-            width: 40, height: 22,
+            width: 42,
+            height: 24,
             decoration: BoxDecoration(
-              color: on ? AppColors.cyan : AppColors.surface3,
+              color: on ? primary : offColor,
               borderRadius: BorderRadius.circular(100),
               boxShadow: on
-                  ? [BoxShadow(color: AppColors.cyan.withOpacity(0.2), blurRadius: 12)]
+                  ? [
+                      BoxShadow(
+                          color: primary.withOpacity(0.25),
+                          blurRadius: 10)
+                    ]
                   : [],
             ),
             child: Padding(
@@ -498,10 +594,18 @@ class _AppToggleState extends State<AppToggle>
                   _anim.value,
                 )!,
                 child: Container(
-                  width: 18, height: 18,
+                  width: 20,
+                  height: 20,
                   decoration: BoxDecoration(
-                    color: on ? const Color(0xFF021015) : AppColors.text3,
+                    color: Colors.white,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -513,7 +617,7 @@ class _AppToggleState extends State<AppToggle>
   }
 }
 
-// ─── Bottom navigation bar
+// ─── Bottom Navigation Bar ───────────────────────────────────
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -528,16 +632,30 @@ class AppBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       (Icons.home_rounded, Icons.home_outlined, 'Home'),
-      (Icons.menu_book_rounded, Icons.menu_book_outlined, 'Dictionary'),
-      (Icons.bar_chart_rounded, Icons.bar_chart_outlined, 'Progress'),
+      (Icons.menu_book_rounded, Icons.menu_book_outlined, 'Learning'),
       (Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
     ];
 
+    final light = _isLight(context);
+    final activeColor = _primary(context);
+    final inactiveColor = _text3(context);
+    final bgColor = _surface(context);
+    final borderColor = _border(context);
+
     return Container(
-      height: 68,
+      height: 72,
       decoration: BoxDecoration(
-        color: AppColors.bg.withOpacity(0.92),
-        border: const Border(top: BorderSide(color: AppColors.border)),
+        color: bgColor,
+        border: Border(top: BorderSide(color: borderColor)),
+        boxShadow: light
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, -4),
+                )
+              ]
+            : [],
       ),
       child: Row(
         children: List.generate(items.length, (i) {
@@ -549,24 +667,30 @@ class AppBottomNav extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.all(6),
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 decoration: BoxDecoration(
-                  color: active ? AppColors.cyan.withOpacity(0.08) : Colors.transparent,
+                  color: active
+                      ? activeColor.withOpacity(light ? 0.1 : 0.08)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      active ? activeIcon : inactiveIcon,
-                      color: active ? AppColors.cyan : AppColors.text3,
-                      size: 20,
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        active ? activeIcon : inactiveIcon,
+                        key: ValueKey(active),
+                        color: active ? activeColor : inactiveColor,
+                        size: 22,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       label.toUpperCase(),
                       style: AppTextStyles.label(
-                        color: active ? AppColors.cyan : AppColors.text3,
+                        color: active ? activeColor : inactiveColor,
                       ).copyWith(fontSize: 8),
                     ),
                   ],
@@ -580,13 +704,16 @@ class AppBottomNav extends StatelessWidget {
   }
 }
 
-// ─── Mesh background gradient
+// ─── Mesh / subtle background ────────────────────────────────
 class MeshBackground extends StatelessWidget {
   final Widget child;
   const MeshBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
+    final light = _isLight(context);
+    final primary = _primary(context);
+    final secondary = Theme.of(context).colorScheme.secondary;
     return Stack(
       children: [
         Positioned.fill(
@@ -596,7 +723,7 @@ class MeshBackground extends StatelessWidget {
                 center: const Alignment(-0.8, -1.0),
                 radius: 1.2,
                 colors: [
-                  AppColors.cyan.withOpacity(0.04),
+                  primary.withOpacity(light ? 0.05 : 0.04),
                   Colors.transparent,
                 ],
               ),
@@ -610,7 +737,7 @@ class MeshBackground extends StatelessWidget {
                 center: const Alignment(0.9, 1.0),
                 radius: 1.0,
                 colors: [
-                  AppColors.violet.withOpacity(0.04),
+                  secondary.withOpacity(light ? 0.04 : 0.04),
                   Colors.transparent,
                 ],
               ),
@@ -619,6 +746,73 @@ class MeshBackground extends StatelessWidget {
         ),
         child,
       ],
+    );
+  }
+}
+
+// ─── Back Button (reusable) ──────────────────────────────────
+class AppBackButton extends StatelessWidget {
+  const AppBackButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pop(context),
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: _surface(context),
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: _border(context)),
+          boxShadow: _cardShadow(context),
+        ),
+        child: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: _text2(context),
+          size: 14,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Accent chip ─────────────────────────────────────────────
+class AccentChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const AccentChip({
+    super.key,
+    required this.label,
+    required this.color,
+    this.selected = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? color.withOpacity(0.12) : _surface2(context),
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(
+            color: selected ? color.withOpacity(0.35) : _border(context),
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.caption(
+            color: selected ? color : _text3(context),
+          ).copyWith(fontWeight: FontWeight.w700),
+        ),
+      ),
     );
   }
 }

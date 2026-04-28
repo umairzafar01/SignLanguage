@@ -28,27 +28,13 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _signIn() async {
-    setState(() { _loading = true; _error = null; });
-    final ok = await context.read<AuthProvider>().signIn(
-      _emailCtrl.text.trim(), _passCtrl.text.trim(),
-    );
-    if (!mounted) return;
-    setState(() => _loading = false);
-    if (ok) {
-      Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
-    } else {
-      setState(() => _error = context.read<AuthProvider>().lastError ?? 'Invalid email or password.');
-    }
-  }
-
-  Future<void> _googleSignIn() async {
     setState(() {
       _loading = true;
       _error = null;
     });
-    final ok = await context.read<AuthProvider>().signInWithGoogle();
+    final ok = await context
+        .read<AuthProvider>()
+        .signIn(_emailCtrl.text.trim(), _passCtrl.text.trim());
     if (!mounted) return;
     setState(() => _loading = false);
     if (ok) {
@@ -57,152 +43,222 @@ class _SignInScreenState extends State<SignInScreen> {
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } else {
-      setState(() => _error = context.read<AuthProvider>().lastError ?? 'Google sign in failed.');
+      setState(() => _error =
+          context.read<AuthProvider>().lastError ?? 'Invalid email or password.');
     }
   }
 
   void _guest() {
     context.read<AuthProvider>().continueAsGuest();
     Navigator.pushReplacement(
-      context, MaterialPageRoute(builder: (_) => const MainScreen()),
+      context,
+      MaterialPageRoute(builder: (_) => const MainScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final primary = Theme.of(context).colorScheme.primary;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Top illustration
-          _AuthIllustration(),
+          // ── Top illustration ───────────────────────────────
+          _AuthHero(primary: primary, isLight: isLight),
 
-          // Form
+          // ── Form ───────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Welcome back', style: AppTextStyles.display().copyWith(fontSize: 26)),
-                  const SizedBox(height: 2),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Sign in to ',
-                          style: AppTextStyles.body(),
-                        ),
-                        TextSpan(
-                          text: 'continue learning',
-                          style: AppTextStyles.body(color: AppColors.cyan),
-                        ),
-                      ],
-                    ),
+                  Text('Welcome back',
+                      style: AppTextStyles.headingOf(context, size: 26)),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Sign in to continue your learning journey',
+                    style: AppTextStyles.bodyOf(context),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
+
                   AppTextField(
                     label: 'Email Address',
                     hint: 'you@email.com',
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.all(12),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(12),
                       child: Icon(Icons.mail_outline_rounded,
-                          color: AppColors.text3, size: 18),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.4),
+                          size: 18),
                     ),
                   ),
                   const SizedBox(height: 16),
+
                   AppTextField(
                     label: 'Password',
                     hint: 'Min. 8 characters',
                     controller: _passCtrl,
                     obscure: true,
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.all(12),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(12),
                       child: Icon(Icons.lock_outline_rounded,
-                          color: AppColors.text3, size: 18),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.4),
+                          size: 18),
                     ),
                   ),
+
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {},
-                      child: Text('Forgot password?',
-                          style: AppTextStyles.caption(color: AppColors.cyan)
-                              .copyWith(fontWeight: FontWeight.w700)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: primary,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 4),
+                      ),
+                      child: Text(
+                        'Forgot password?',
+                        style: AppTextStyles.caption(color: primary)
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
+
+                  // Error banner
                   if (_error != null) ...[
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.rose.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.rose.withOpacity(0.2)),
+                        color: (isLight
+                                ? LightColors.roseBg
+                                : AppColors.rose.withOpacity(0.08)),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: (isLight ? LightColors.rose : AppColors.rose)
+                              .withOpacity(0.25),
+                        ),
                       ),
-                      child: Text(_error!, style: AppTextStyles.caption(color: AppColors.rose)),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline_rounded,
+                              color: isLight
+                                  ? LightColors.rose
+                                  : AppColors.rose,
+                              size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(_error!,
+                                style: AppTextStyles.caption(
+                                    color: isLight
+                                        ? LightColors.rose
+                                        : AppColors.rose)),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                   ],
-                  PrimaryButton(label: 'Sign In', onTap: _signIn, loading: _loading),
-                  const SizedBox(height: 16),
-                  const TextDivider('or'),
-                  const SizedBox(height: 16),
-                  SecondaryButton(
-                    label: 'Continue with Google',
-                    icon: const Icon(Icons.g_mobiledata_rounded,
-                        color: AppColors.text2, size: 22),
-                    onTap: _googleSignIn,
-                  ),
+
+                  PrimaryButton(
+                      label: 'Sign In', onTap: _signIn, loading: _loading),
+
                   if (!auth.firebaseEnabled) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      'Firebase is not configured yet. Add Firebase options to enable email/Google auth.',
-                      style: AppTextStyles.caption(color: AppColors.amber),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: (isLight
+                                ? LightColors.amberBg
+                                : AppColors.amber.withOpacity(0.06)),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: (isLight ? LightColors.amber : AppColors.amber)
+                              .withOpacity(0.3),
+                        ),
+                      ),
+                      child: Text(
+                        'Firebase is not configured yet. Add Firebase options to enable email auth.',
+                        style: AppTextStyles.caption(
+                            color: isLight
+                                ? LightColors.amber
+                                : AppColors.amber),
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  GestureDetector(
-                    onTap: _guest,
-                    child: Center(
-                      child: RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Continue as ',
-                              style: AppTextStyles.caption(),
-                            ),
-                            TextSpan(
-                              text: 'Guest',
-                              style: AppTextStyles.caption(color: AppColors.amber)
-                                  .copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            TextSpan(
-                              text: ' — limited access',
-                              style: AppTextStyles.caption(),
-                            ),
-                          ],
+
+                  const SizedBox(height: 20),
+
+                  // Guest link
+                  Center(
+                    child: GestureDetector(
+                      onTap: _guest,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isLight
+                              ? LightColors.amberBg
+                              : AppColors.amber.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: (isLight ? LightColors.amber : AppColors.amber)
+                                .withOpacity(0.2),
+                          ),
+                        ),
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Continue as ',
+                                style: AppTextStyles.captionOf(context),
+                              ),
+                              TextSpan(
+                                text: 'Guest',
+                                style: AppTextStyles.caption(
+                                  color: isLight
+                                      ? LightColors.amber
+                                      : AppColors.amber,
+                                ).copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              TextSpan(
+                                text: ' — limited access',
+                                style: AppTextStyles.captionOf(context),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 16),
                   Center(
                     child: GestureDetector(
-                      onTap: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const SignUpScreen())),
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SignUpScreen())),
                       child: RichText(
                         text: TextSpan(
                           children: [
                             TextSpan(
                               text: "Don't have an account? ",
-                              style: AppTextStyles.caption(),
+                              style: AppTextStyles.captionOf(context),
                             ),
                             TextSpan(
                               text: 'Create one',
-                              style: AppTextStyles.caption(color: AppColors.cyan)
+                              style: AppTextStyles.caption(color: primary)
                                   .copyWith(fontWeight: FontWeight.w700),
                             ),
                           ],
@@ -220,79 +276,69 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 }
 
-class _AuthIllustration extends StatelessWidget {
+// ── Auth Hero Illustration ────────────────────────────────────
+class _AuthHero extends StatelessWidget {
+  final Color primary;
+  final bool isLight;
+  const _AuthHero({required this.primary, required this.isLight});
+
   @override
   Widget build(BuildContext context) {
+    final bgColor = isLight ? LightColors.primaryLight : AppColors.surface;
     return Container(
-      height: 180,
+      height: 188,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: const Border(bottom: BorderSide(color: AppColors.border)),
+        color: bgColor,
+        border: Border(
+          bottom: BorderSide(
+            color: isLight ? LightColors.border : AppColors.border,
+          ),
+        ),
       ),
       child: Stack(
         children: [
-          // Grid pattern
-          Positioned.fill(
-            child: CustomPaint(painter: _GridPainter()),
-          ),
+          // Subtle grid
+          Positioned.fill(child: CustomPaint(painter: _GridPainter(primary))),
           // Glow
           Center(
             child: Container(
-              width: 200, height: 120,
+              width: 220,
+              height: 130,
               decoration: BoxDecoration(
                 gradient: RadialGradient(
-                  colors: [
-                    AppColors.cyan.withOpacity(0.1),
-                    Colors.transparent,
-                  ],
+                  colors: [primary.withOpacity(0.12), Colors.transparent],
                 ),
               ),
             ),
           ),
-          // Status bar area
+          // Hand cards
           Positioned(
-            top: 0, left: 0, right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('9:41',
-                        style: AppTextStyles.bodyMedium(color: AppColors.text1)
-                            .copyWith(fontSize: 12)),
-                    Row(
-                      children: [
-                        Icon(Icons.signal_cellular_alt_rounded,
-                            color: AppColors.text1, size: 14),
-                        const SizedBox(width: 4),
-                        Icon(Icons.wifi_rounded, color: AppColors.text1, size: 14),
-                        const SizedBox(width: 4),
-                        Icon(Icons.battery_full_rounded,
-                            color: AppColors.text1, size: 14),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Hand icons row
-          Positioned(
-            bottom: 0, left: 0, right: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _HandCard(icon: Icons.waving_hand_rounded,
-                    height: 70, color: AppColors.surface2),
-                const SizedBox(width: 6),
-                _HandCard(icon: Icons.sign_language_rounded,
-                    height: 88, color: AppColors.surface2,
-                    accentColor: AppColors.cyan, main: true),
-                const SizedBox(width: 6),
-                _HandCard(icon: Icons.back_hand_rounded,
-                    height: 70, color: AppColors.surface2),
+                _HandCard(
+                    icon: Icons.waving_hand_rounded,
+                    height: 70,
+                    bgColor: isLight ? LightColors.surface : AppColors.surface2,
+                    iconColor: isLight ? LightColors.text3 : AppColors.text3),
+                const SizedBox(width: 8),
+                _HandCard(
+                    icon: Icons.sign_language_rounded,
+                    height: 90,
+                    bgColor: primary.withOpacity(0.12),
+                    iconColor: primary,
+                    main: true,
+                    borderColor: primary.withOpacity(0.3)),
+                const SizedBox(width: 8),
+                _HandCard(
+                    icon: Icons.back_hand_rounded,
+                    height: 70,
+                    bgColor: isLight ? LightColors.surface : AppColors.surface2,
+                    iconColor: isLight ? LightColors.text3 : AppColors.text3),
               ],
             ),
           ),
@@ -305,51 +351,55 @@ class _AuthIllustration extends StatelessWidget {
 class _HandCard extends StatelessWidget {
   final IconData icon;
   final double height;
-  final Color color;
-  final Color? accentColor;
+  final Color bgColor;
+  final Color iconColor;
   final bool main;
+  final Color? borderColor;
 
   const _HandCard({
-    required this.icon, required this.height,
-    required this.color, this.accentColor, this.main = false,
+    required this.icon,
+    required this.height,
+    required this.bgColor,
+    required this.iconColor,
+    this.main = false,
+    this.borderColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Container(
-      width: main ? 72 : 62,
+      width: main ? 74 : 62,
       height: height,
       decoration: BoxDecoration(
-        color: main && accentColor != null
-            ? accentColor!.withOpacity(0.12)
-            : color,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+        color: bgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         border: Border.all(
-          color: main && accentColor != null
-              ? accentColor!.withOpacity(0.3)
-              : AppColors.border,
+          color: borderColor ??
+              (isLight ? LightColors.border : AppColors.border),
         ),
         boxShadow: main
-            ? [BoxShadow(
-                color: AppColors.cyan.withOpacity(0.15),
-                blurRadius: 24,
-              )]
+            ? [
+                BoxShadow(
+                    color: iconColor.withOpacity(0.2), blurRadius: 20)
+              ]
             : [],
       ),
       child: Center(
-        child: Icon(icon,
-            color: accentColor ?? AppColors.text3,
-            size: main ? 32 : 26),
+        child: Icon(icon, color: iconColor, size: main ? 32 : 26),
       ),
     );
   }
 }
 
 class _GridPainter extends CustomPainter {
+  final Color color;
+  const _GridPainter(this.color);
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.cyan.withOpacity(0.04)
+      ..color = color.withOpacity(0.06)
       ..strokeWidth = 1;
     const step = 24.0;
     for (double x = 0; x < size.width; x += step) {

@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/widgets/common_widgets.dart';
-
 import '../auth/auth_provider.dart';
 import '../auth/sign_in_screen.dart';
-
-import '../sign_to_text/sign_to_text_screen.dart';
-import '../text_to_sign/text_to_sign_screen.dart';
-import '../speech_to_text/speech_to_text_screen.dart';
-import '../text_to_speech/text_to_speech_screen.dart';
+import '../translator/translator_hub_screen.dart';
+import '../dictionary/dictionary_screen.dart';
+import '../speech_tools/speech_tools_screen.dart';
+import '../../core/providers/notification_provider.dart';
+import '../notifications/notifications_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -20,126 +17,216 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final isGuest = auth.isGuest;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: MeshBackground(
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 🔥 HEADER TEXT
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isGuest ? 'Browsing as' : 'Good morning,',
-                            style: AppTextStyles.caption(),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            isGuest
-                                ? 'Guest'
-                                : auth.userName.isEmpty
-                                    ? 'Ahmad Raza'
-                                    : _capitalize(auth.userName),
-                            style: AppTextStyles.heading(size: 22),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // Guest / streak
-                      if (!isGuest)
-                        _StreakBadge()
-                      else
-                        _GuestBanner(
-                          onSignIn: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const SignInScreen()),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Top row: greeting + bell ──────────────
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isGuest ? 'Browsing as' : _greeting(),
+                                style: AppTextStyles.captionOf(context),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isGuest
+                                    ? 'Guest'
+                                    : _capitalize(auth.userName.isEmpty
+                                        ? 'there'
+                                        : auth.userName),
+                                style: AppTextStyles.headingOf(context, size: 22),
+                              ),
+                            ],
                           ),
                         ),
-
-                      const SizedBox(height: 24),
-
-                      const SectionLabel('Modules'),
-
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 1.35,
-                        children: [
-                          _ModuleCard(
-                            title: 'Sign to Text',
-                            icon: Icons.sign_language_rounded,
-                            color: AppColors.cyan,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const SignToTextScreen()),
-                            ),
-                          ),
-                          _ModuleCard(
-                            title: 'Text to Speech',
-                            icon: Icons.volume_up_rounded,
-                            color: AppColors.amber,
-                            locked: isGuest,
-                            onTap: isGuest
-                                ? () => _showGuestDialog(context)
-                                : () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const TextToSpeechScreen()),
+                        Consumer<NotificationProvider>(
+                          builder: (_, notes, __) {
+                            final unread = notes.unreadCount;
+                            return GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                              ),
+                              child: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: isLight
+                                      ? LightColors.primaryLight
+                                      : AppColors.surface2,
+                                  borderRadius: BorderRadius.circular(13),
+                                  border: Border.all(
+                                    color: isLight ? LightColors.border : AppColors.border,
+                                  ),
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.notifications_none_rounded,
+                                      color: primary,
+                                      size: 20,
                                     ),
-                          ),
-                          _ModuleCard(
-                            title: 'Speech to Text',
-                            icon: Icons.mic_rounded,
-                            color: AppColors.violet,
-                            locked: isGuest,
-                            onTap: isGuest
-                                ? () => _showGuestDialog(context)
-                                : () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const SpeechToTextScreen()),
-                                    ),
-                          ),
-                          _ModuleCard(
-                            title: 'Text to Sign',
-                            icon: Icons.back_hand_rounded,
-                            color: AppColors.rose,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const TextToSignScreen()),
-                            ),
-                          ),
-                        ],
+                                    if (unread > 0)
+                                      Positioned(
+                                        right: 6,
+                                        top: 6,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.redAccent,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                          child: Center(
+                                            child: Text(
+                                              unread > 9 ? '9+' : '$unread',
+                                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Guest badge ────────────────────────────
+                    if (isGuest)
+                      _GuestBanner(
+                        isLight: isLight,
+                        onSignIn: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SignInScreen()),
+                        ),
                       ),
+                    const SizedBox(height: 24),
 
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+                    // ── Hero CTA card ─────────────────────────
+                    _HeroCTA(
+                      isLight: isLight,
+                      primary: primary,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const TranslatorHubScreen()),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── Modules ───────────────────────────────
+                    Text('MODULES', style: AppTextStyles.labelOf(context)),
+                    const SizedBox(height: 12),
+
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 1.45,
+                      children: [
+                        _ModuleCard(
+                          title: 'Sign → Text',
+                          subtitle: 'Camera detection',
+                          icon: Icons.sign_language_rounded,
+                          color: isLight ? LightColors.cyan : AppColors.cyan,
+                          bgColor: isLight
+                              ? LightColors.cyanBg
+                              : AppColors.cyan.withOpacity(0.08),
+                          isLight: isLight,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const TranslatorHubScreen(initialMode: 0)),
+                          ),
+                        ),
+                        _ModuleCard(
+                          title: 'Text → Sign',
+                          subtitle: 'Animation output',
+                          icon: Icons.back_hand_rounded,
+                          color: isLight ? LightColors.rose : AppColors.rose,
+                          bgColor: isLight
+                              ? LightColors.roseBg
+                              : AppColors.rose.withOpacity(0.08),
+                          isLight: isLight,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const TranslatorHubScreen(initialMode: 1)),
+                          ),
+                        ),
+                        _ModuleCard(
+                          title: 'Learning',
+                          subtitle: '2,400+ signs',
+                          icon: Icons.menu_book_rounded,
+                          color: isLight ? LightColors.violet : AppColors.violet,
+                          bgColor: isLight
+                              ? LightColors.violetBg
+                              : AppColors.violet.withOpacity(0.08),
+                          isLight: isLight,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const DictionaryScreen()),
+                          ),
+                        ),
+                        _ModuleCard(
+                          title: 'Text → Speech',
+                          subtitle: 'Voice synthesis',
+                          icon: Icons.volume_up_rounded,
+                          color: isLight ? LightColors.amber : AppColors.amber,
+                          bgColor: isLight
+                            ? LightColors.amberBg
+                            : AppColors.amber.withOpacity(0.08),
+                          locked: isGuest,
+                          isLight: isLight,
+                          onTap: isGuest
+                            ? () => _showGuestDialog(context)
+                            : () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SpeechToolsScreen()),
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning,';
+    if (h < 17) return 'Good afternoon,';
+    return 'Good evening,';
   }
 
   String _capitalize(String s) => s.isEmpty
@@ -150,35 +237,30 @@ class DashboardScreen extends StatelessWidget {
           .join(' ');
 
   void _showGuestDialog(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        title: Text('Sign In Required', style: AppTextStyles.heading()),
-        content: Text(
-          'This module is only available to registered users.',
-          style: AppTextStyles.body(),
-        ),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Sign In Required',
+            style: AppTextStyles.headingOf(context, size: 18)),
+        content: Text('This module is only available to registered users.',
+            style: AppTextStyles.bodyOf(context)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Later',
-                style: AppTextStyles.body(color: AppColors.text3)),
+            child: Text('Later', style: AppTextStyles.captionOf(context)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SignInScreen()),
-              );
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SignInScreen()));
             },
             child: Text('Sign In',
-                style: AppTextStyles.bodyMedium(color: AppColors.cyan)),
+                style: AppTextStyles.caption(color: primary)
+                    .copyWith(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -186,98 +268,118 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _StreakBadge extends StatelessWidget {
+// ── Hero CTA ─────────────────────────────────────────────────
+class _HeroCTA extends StatelessWidget {
+  final bool isLight;
+  final Color primary;
+  final VoidCallback onTap;
+  const _HeroCTA({required this.isLight, required this.primary, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.amber.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: AppColors.amber.withOpacity(0.18)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.local_fire_department_rounded,
-            color: AppColors.amber,
-            size: 16,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primary, primary.withOpacity(0.78)],
           ),
-          const SizedBox(width: 7),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '7',
-                  style:
-                      AppTextStyles.heading(size: 14, color: AppColors.amber),
-                ),
-                TextSpan(
-                  text: ' day streak · ',
-                  style: AppTextStyles.caption(color: AppColors.amber),
-                ),
-                TextSpan(
-                  text: '142',
-                  style: AppTextStyles.bodyMedium(color: AppColors.amber),
-                ),
-                TextSpan(
-                  text: ' translations',
-                  style: AppTextStyles.caption(color: AppColors.amber),
-                ),
-              ],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: primary.withOpacity(0.3),
+              blurRadius: 24,
+              offset: const Offset(0, 6),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Start Translating',
+                      style: AppTextStyles.subheading(color: Colors.white)),
+                  const SizedBox(height: 4),
+                  Text('Sign ↔ Text in real time',
+                      style: AppTextStyles.caption(color: Colors.white70)),
+                ],
+              ),
+            ),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: const Icon(Icons.translate_rounded,
+                  color: Colors.white, size: 22),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+// ── Guest Banner ─────────────────────────────────────────────
 class _GuestBanner extends StatelessWidget {
+  final bool isLight;
   final VoidCallback onSignIn;
-  const _GuestBanner({required this.onSignIn});
+  const _GuestBanner({required this.isLight, required this.onSignIn});
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.amber.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.amber.withOpacity(0.15)),
+        color: isLight ? LightColors.primaryLight : primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primary.withOpacity(0.2)),
       ),
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: AppColors.amber.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(9),
+              color: primary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.lock_outline_rounded,
-              color: AppColors.amber,
-              size: 16,
-            ),
+            child: Icon(Icons.info_outline_rounded, color: primary, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Limited Access Mode',
-                  style: AppTextStyles.caption(color: AppColors.amber)
-                      .copyWith(fontWeight: FontWeight.w700),
-                ),
+                Text('Guest Mode',
+                    style: AppTextStyles.caption(color: primary)
+                        .copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(
-                  '2 of 4 modules available · Sign in to unlock all',
-                  style: AppTextStyles.caption(),
-                ),
+                Text('2 of 4 modules available',
+                    style: AppTextStyles.captionOf(context)),
               ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onSignIn,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text('Sign In',
+                  style: AppTextStyles.caption(color: Colors.white)
+                      .copyWith(fontWeight: FontWeight.w700)),
             ),
           ),
         ],
@@ -286,17 +388,24 @@ class _GuestBanner extends StatelessWidget {
   }
 }
 
+// ── Module Card ───────────────────────────────────────────────
 class _ModuleCard extends StatelessWidget {
   final String title;
+  final String subtitle;
   final IconData icon;
   final Color color;
+  final Color bgColor;
   final bool locked;
+  final bool isLight;
   final VoidCallback onTap;
 
   const _ModuleCard({
     required this.title,
+    required this.subtitle,
     required this.icon,
     required this.color,
+    required this.bgColor,
+    required this.isLight,
     required this.onTap,
     this.locked = false,
   });
@@ -304,22 +413,24 @@ class _ModuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Opacity(
-      opacity: locked ? 0.35 : 1.0,
+      opacity: locked ? 0.45 : 1.0,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.03),
-              ],
-            ),
+            color: isLight ? LightColors.surface : AppColors.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: color.withOpacity(0.15)),
+            border: Border.all(
+                color: isLight ? LightColors.border : AppColors.border),
+            boxShadow: isLight
+                ? const [
+                    BoxShadow(
+                        color: LightColors.shadow,
+                        blurRadius: 14,
+                        offset: Offset(0, 2))
+                  ]
+                : [],
           ),
           child: Stack(
             children: [
@@ -327,20 +438,22 @@ class _ModuleCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(9),
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(11),
                     ),
-                    child: Icon(icon, color: color, size: 16),
+                    child: Icon(icon, color: color, size: 19),
                   ),
                   const Spacer(),
-                  Text(
-                    title,
-                    style: AppTextStyles.subheading(color: color)
-                        .copyWith(fontSize: 12),
-                  ),
+                  Text(title,
+                      style: AppTextStyles.bodyMedium(color: color)
+                          .copyWith(fontSize: 13, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: AppTextStyles.captionOf(context)
+                          .copyWith(fontSize: 10)),
                 ],
               ),
               if (locked)
@@ -348,7 +461,8 @@ class _ModuleCard extends StatelessWidget {
                   top: 0,
                   right: 0,
                   child: Icon(Icons.lock_rounded,
-                      color: AppColors.text3, size: 13),
+                      color: isLight ? LightColors.text3 : AppColors.text3,
+                      size: 13),
                 ),
             ],
           ),

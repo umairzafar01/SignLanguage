@@ -14,7 +14,7 @@ class ProgressScreen extends StatelessWidget {
     final progress = context.watch<UserProgressProvider>();
     final auth = context.watch<AuthProvider>();
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -33,8 +33,6 @@ class ProgressScreen extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(child: _StatCard('${progress.translations}', 'Translations', AppColors.cyan)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _StatCard('${progress.dayStreak}', 'Day Streak', AppColors.amber)),
                         const SizedBox(width: 10),
                         Expanded(child: _StatCard('${progress.savedSigns}', 'Saved', AppColors.violet)),
                       ],
@@ -108,14 +106,6 @@ class ProgressScreen extends StatelessWidget {
                         style: AppTextStyles.label()),
                     const SizedBox(height: 12),
                     _AchievementRow(
-                      icon: Icons.local_fire_department_rounded,
-                      color: AppColors.amber,
-                      title: '7-Day Streak',
-                      subtitle: 'Translated every day for a week',
-                      earned: progress.dayStreak >= 7,
-                    ),
-                    const SizedBox(height: 8),
-                    _AchievementRow(
                       icon: Icons.sign_language_rounded,
                       color: AppColors.cyan,
                       title: '100 Signs',
@@ -130,15 +120,6 @@ class ProgressScreen extends StatelessWidget {
                       subtitle: 'Save 50 signs to your dictionary',
                       earned: progress.savedSigns >= 50,
                       progress: (progress.savedSigns / 50).clamp(0.0, 1.0),
-                    ),
-                    const SizedBox(height: 8),
-                    _AchievementRow(
-                      icon: Icons.emoji_events_rounded,
-                      color: AppColors.rose,
-                      title: '30-Day Champion',
-                      subtitle: 'Maintain a 30-day streak',
-                      earned: progress.dayStreak >= 30,
-                      progress: (progress.dayStreak / 30).clamp(0.0, 1.0),
                     ),
                     const SizedBox(height: 20),
                   ],

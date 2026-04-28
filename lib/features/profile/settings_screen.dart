@@ -25,7 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ThemeMode.system => 'System',
     };
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

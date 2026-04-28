@@ -33,10 +33,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
       setState(() => _error = 'Password must be at least 8 characters.');
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final ok = await context.read<AuthProvider>().signUp(
-      _nameCtrl.text.trim(), _emailCtrl.text.trim(), _passCtrl.text.trim(),
-    );
+          _nameCtrl.text.trim(),
+          _emailCtrl.text.trim(),
+          _passCtrl.text.trim(),
+        );
     if (!mounted) return;
     setState(() => _loading = false);
     if (ok) {
@@ -46,7 +51,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         (_) => false,
       );
     } else {
-      setState(() => _error = context.read<AuthProvider>().lastError ?? 'Please fill all fields correctly.');
+      setState(() => _error = context.read<AuthProvider>().lastError ??
+          'Please fill all fields correctly.');
     }
   }
 
@@ -61,65 +67,83 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final iconFade = Theme.of(context).colorScheme.onSurface.withOpacity(0.4);
+
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
+            // Back + header
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 36, height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: AppColors.text2, size: 14),
-                    ),
-                  ),
+                  AppBackButton(),
                 ],
               ),
             ),
+
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Create your', style: AppTextStyles.display().copyWith(fontSize: 26)),
-                    Text('account', style: AppTextStyles.display().copyWith(
-                      fontSize: 26, color: AppColors.cyan,
-                    )),
+                    // Title
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Create your\n',
+                            style: AppTextStyles.headingOf(context, size: 26),
+                          ),
+                          TextSpan(
+                            text: 'account',
+                            style: AppTextStyles.heading(size: 26,
+                                color: primary),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text('Track progress and unlock all AI features',
-                        style: AppTextStyles.body()),
-                    const SizedBox(height: 20),
+                    Text(
+                      'Track progress and unlock all AI features',
+                      style: AppTextStyles.bodyOf(context),
+                    ),
+                    const SizedBox(height: 24),
 
                     // Guest mode banner
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.amber.withOpacity(0.05),
+                        color: isLight
+                            ? LightColors.amberBg
+                            : AppColors.amber.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                            color: AppColors.amber.withOpacity(0.15)),
+                          color:
+                              (isLight ? LightColors.amber : AppColors.amber)
+                                  .withOpacity(0.2),
+                        ),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            width: 32, height: 32,
+                            width: 34,
+                            height: 34,
                             decoration: BoxDecoration(
-                              color: AppColors.amber.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(9),
+                              color: (isLight ? LightColors.amber : AppColors.amber)
+                                  .withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.bolt_rounded,
-                                color: AppColors.amber, size: 16),
+                            child: Icon(Icons.bolt_rounded,
+                                color: isLight
+                                    ? LightColors.amber
+                                    : AppColors.amber,
+                                size: 18),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -127,27 +151,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Guest Mode Available',
-                                    style: AppTextStyles.caption(color: AppColors.amber)
+                                    style: AppTextStyles.caption(
+                                            color: isLight
+                                                ? LightColors.amber
+                                                : AppColors.amber)
                                         .copyWith(fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 2),
-                                Text('Try before registering — sign up to save progress',
-                                    style: AppTextStyles.caption()),
+                                Text(
+                                  'Try before registering — sign up to save progress',
+                                  style: AppTextStyles.captionOf(context),
+                                ),
                               ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
                     AppTextField(
                       label: 'Full Name',
                       hint: 'Your full name',
                       controller: _nameCtrl,
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.all(12),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.all(12),
                         child: Icon(Icons.person_outline_rounded,
-                            color: AppColors.text3, size: 18),
+                            color: iconFade, size: 18),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -156,10 +185,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       hint: 'you@email.com',
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.all(12),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.all(12),
                         child: Icon(Icons.mail_outline_rounded,
-                            color: AppColors.text3, size: 18),
+                            color: iconFade, size: 18),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -168,58 +197,95 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       hint: 'Min. 8 characters',
                       controller: _passCtrl,
                       obscure: true,
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.all(12),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.all(12),
                         child: Icon(Icons.lock_outline_rounded,
-                            color: AppColors.text3, size: 18),
+                            color: iconFade, size: 18),
                       ),
                     ),
-                    const SizedBox(height: 8),
 
+                    // Error
                     if (_error != null) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 14),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.rose.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.rose.withOpacity(0.2)),
+                          color: isLight
+                              ? LightColors.roseBg
+                              : AppColors.rose.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                (isLight ? LightColors.rose : AppColors.rose)
+                                    .withOpacity(0.25),
+                          ),
                         ),
-                        child: Text(_error!,
-                            style: AppTextStyles.caption(color: AppColors.rose)),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline_rounded,
+                                color: isLight
+                                    ? LightColors.rose
+                                    : AppColors.rose,
+                                size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(_error!,
+                                  style: AppTextStyles.caption(
+                                      color: isLight
+                                          ? LightColors.rose
+                                          : AppColors.rose)),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                    const SizedBox(height: 16),
-                    PrimaryButton(label: 'Create Account', onTap: _signUp, loading: _loading),
+
+                    const SizedBox(height: 20),
+                    PrimaryButton(
+                        label: 'Create Account',
+                        onTap: _signUp,
+                        loading: _loading),
                     const SizedBox(height: 14),
-                    GestureDetector(
-                      onTap: _guest,
-                      child: Center(
+
+                    // Guest link
+                    Center(
+                      child: GestureDetector(
+                        onTap: _guest,
                         child: RichText(
                           text: TextSpan(
                             children: [
-                              TextSpan(text: 'Skip for now — continue as ',
-                                  style: AppTextStyles.caption()),
-                              TextSpan(text: 'Guest',
-                                  style: AppTextStyles.caption(color: AppColors.amber)
-                                      .copyWith(fontWeight: FontWeight.w700)),
+                              TextSpan(
+                                  text: 'Skip for now — continue as ',
+                                  style: AppTextStyles.captionOf(context)),
+                              TextSpan(
+                                text: 'Guest',
+                                style: AppTextStyles.caption(
+                                  color: isLight
+                                      ? LightColors.amber
+                                      : AppColors.amber,
+                                ).copyWith(fontWeight: FontWeight.w700),
+                              ),
                             ],
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
+
                     Center(
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: RichText(
                           text: TextSpan(
                             children: [
-                              TextSpan(text: 'Already have an account? ',
-                                  style: AppTextStyles.caption()),
-                              TextSpan(text: 'Sign in',
-                                  style: AppTextStyles.caption(color: AppColors.cyan)
-                                      .copyWith(fontWeight: FontWeight.w700)),
+                              TextSpan(
+                                  text: 'Already have an account? ',
+                                  style: AppTextStyles.captionOf(context)),
+                              TextSpan(
+                                text: 'Sign in',
+                                style: AppTextStyles.caption(color: primary)
+                                    .copyWith(fontWeight: FontWeight.w700),
+                              ),
                             ],
                           ),
                         ),

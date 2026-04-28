@@ -165,7 +165,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     final currentChar =
         hasSigns && _signIndex < _resolvedChars.length ? _resolvedChars[_signIndex] : '-';
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,6 +371,16 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                                         child: Image.asset(
                                           currentAsset,
                                           fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Container(
+                                            color: AppColors.surface2,
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              currentChar,
+                                              style: AppTextStyles.subheading(
+                                                color: AppColors.rose,
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
                               ),

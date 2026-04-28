@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'core/providers/app_preferences_provider.dart';
+import 'core/providers/notification_provider.dart';
 import 'core/providers/progress_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth_provider.dart';
@@ -20,12 +21,13 @@ void main() async {
     firebaseEnabled = false;
   }
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  // System UI is configured per-theme in AppTheme; set a safe default here.
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarBrightness: Brightness.dark,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Color(0xFF070B12),
-    systemNavigationBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
+    systemNavigationBarColor: Color(0xFFFFFFFF),
+    systemNavigationBarIconBrightness: Brightness.dark,
   ));
   runApp(SignBridgeApp(firebaseEnabled: firebaseEnabled));
 }
@@ -44,11 +46,15 @@ class SignBridgeApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => AppPreferencesProvider()..initialize(),
         ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationProvider()..initialize(),
+        ),
         ChangeNotifierProxyProvider<AuthProvider, UserProgressProvider>(
           create: (_) => UserProgressProvider(),
           update: (_, auth, progress) {
             final provider = progress ?? UserProgressProvider();
-            provider.initializeForUser(auth.isAuthenticated ? auth.userId : null);
+            provider.initializeForUser(
+                auth.isAuthenticated ? auth.userId : null);
             return provider;
           },
         ),
