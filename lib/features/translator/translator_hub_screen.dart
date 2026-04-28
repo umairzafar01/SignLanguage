@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -85,7 +86,7 @@ class _TranslatorHubScreenState extends State<TranslatorHubScreen>
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Row(children: [
-              AppBackButton(),
+              const AppBackButton(),
               const SizedBox(width: 12),
               Text('Translator', style: AppTextStyles.headingOf(context, size: 17)),
               const Spacer(),
@@ -145,9 +146,9 @@ class _TranslatorHubScreenState extends State<TranslatorHubScreen>
                 margin: EdgeInsets.only(right: i < _modes.length - 1 ? 8 : 0),
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 decoration: BoxDecoration(
-                  color: on ? accent.withOpacity(0.12) : (isLight ? LightColors.surface : AppColors.surface),
+                  color: on ? accent.withValues(alpha: 0.12) : (isLight ? LightColors.surface : AppColors.surface),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: on ? accent.withOpacity(0.35) : (isLight ? LightColors.border : AppColors.border)),
+                  border: Border.all(color: on ? accent.withValues(alpha: 0.35) : (isLight ? LightColors.border : AppColors.border)),
                 ),
                 child: Center(child: Text(_modes[i],
                     style: AppTextStyles.caption(color: on ? accent : (isLight ? LightColors.text3 : AppColors.text3))
@@ -204,7 +205,7 @@ class _TranslatorHubScreenState extends State<TranslatorHubScreen>
               decoration: BoxDecoration(
                 color: isLight ? LightColors.surface : AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: accent.withOpacity(0.25)),
+                border: Border.all(color: accent.withValues(alpha: 0.25)),
                 boxShadow: isLight ? const [BoxShadow(color: LightColors.shadow, blurRadius: 12, offset: Offset(0, 2))] : [],
               ),
               child: Column(
@@ -302,24 +303,31 @@ class _TranslatorHubScreenState extends State<TranslatorHubScreen>
                                 width: 82,
                                 height: 100,
                                 decoration: BoxDecoration(
-                                  color: active ? accent.withOpacity(0.12) : (isLight ? LightColors.surface2 : AppColors.surface2),
+                                  color: active ? accent.withValues(alpha: 0.12) : (isLight ? LightColors.surface2 : AppColors.surface2),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: active ? accent.withOpacity(0.5) : (isLight ? LightColors.border : AppColors.border),
+                                    color: active ? accent.withValues(alpha: 0.5) : (isLight ? LightColors.border : AppColors.border),
                                     width: active ? 1.5 : 1,
                                   ),
                                   boxShadow: active
-                                      ? [BoxShadow(color: accent.withOpacity(0.2), blurRadius: 14, offset: const Offset(0, 4))]
+                                      ? [BoxShadow(color: accent.withValues(alpha: 0.2), blurRadius: 14, offset: const Offset(0, 4))]
                                       : [],
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(6, 10, 6, 4),
-                                        child: asset != null
-                                            ? ClipRRect(
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(6, 8, 6, 4),
+                                      child: SizedBox(
+                                        height: 56,
+                                        child: kIsWeb || asset == null
+                                            ? Center(
+                                                child: Text(
+                                                  char,
+                                                  style: AppTextStyles.display(color: accent).copyWith(fontSize: 32, height: 1),
+                                                ),
+                                              )
+                                            : ClipRRect(
                                                 borderRadius: BorderRadius.circular(10),
                                                 child: Image.asset(
                                                   asset,
@@ -327,26 +335,20 @@ class _TranslatorHubScreenState extends State<TranslatorHubScreen>
                                                   errorBuilder: (_, __, ___) => Center(
                                                     child: Text(
                                                       char,
-                                                      style: AppTextStyles.display(color: accent).copyWith(fontSize: 34, height: 1),
+                                                      style: AppTextStyles.display(color: accent).copyWith(fontSize: 32, height: 1),
                                                     ),
                                                   ),
-                                                ),
-                                              )
-                                            : Center(
-                                                child: Text(
-                                                  char,
-                                                  style: AppTextStyles.display(color: accent).copyWith(fontSize: 34, height: 1),
                                                 ),
                                               ),
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.only(bottom: 8),
+                                      padding: const EdgeInsets.only(bottom: 6),
                                       child: Text(
                                         char,
                                         style: AppTextStyles.label(
                                           color: active ? accent : (isLight ? LightColors.text2 : AppColors.text2),
-                                        ).copyWith(fontSize: 11, letterSpacing: 0),
+                                        ).copyWith(fontSize: 10, letterSpacing: 0),
                                       ),
                                     ),
                                   ],
@@ -361,7 +363,7 @@ class _TranslatorHubScreenState extends State<TranslatorHubScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.sign_language_rounded, color: accent.withOpacity(0.3), size: 56),
+                          Icon(Icons.sign_language_rounded, color: accent.withValues(alpha: 0.3), size: 56),
                           const SizedBox(height: 12),
                           Text('Type text above to see signs', style: AppTextStyles.captionOf(ctx)),
                         ],
@@ -478,15 +480,15 @@ class _CameraView extends StatelessWidget {
             Positioned(top: 0, right: 0, child: _Corner(color: accent, size: 16, t: 2, top: true, left: false)),
             Positioned(bottom: 0, left: 0, child: _Corner(color: accent, size: 16, t: 2, top: false, left: true)),
             Positioned(bottom: 0, right: 0, child: _Corner(color: accent, size: 16, t: 2, top: false, left: false)),
-            Center(child: Icon(Icons.sign_language_rounded, color: accent.withOpacity(0.55), size: 52)),
+            Center(child: Icon(Icons.sign_language_rounded, color: accent.withValues(alpha: 0.55), size: 52)),
           ]))),
           Positioned(bottom: 12, left: 0, right: 0,
             child: Center(child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: isLight ? Colors.white.withOpacity(0.85) : Colors.black.withOpacity(0.65),
+                color: isLight ? Colors.white.withValues(alpha: 0.85) : Colors.black.withValues(alpha: 0.65),
                 borderRadius: BorderRadius.circular(100),
-                border: Border.all(color: accent.withOpacity(0.2)),
+                border: Border.all(color: accent.withValues(alpha: 0.2)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 FadeTransition(opacity: CurvedAnimation(parent: dotCtrl, curve: Curves.easeInOut),
@@ -530,7 +532,7 @@ class _GridPainter extends CustomPainter {
   const _GridPainter(this.color);
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = color.withOpacity(0.06)..strokeWidth = 1;
+    final p = Paint()..color = color.withValues(alpha: 0.06)..strokeWidth = 1;
     const step = 26.0;
     for (double x = 0; x < size.width; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);

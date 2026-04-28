@@ -7,8 +7,7 @@ import '../auth/sign_in_screen.dart';
 import '../translator/translator_hub_screen.dart';
 import '../dictionary/dictionary_screen.dart';
 import '../speech_tools/speech_tools_screen.dart';
-import '../../core/providers/notification_provider.dart';
-import '../notifications/notifications_screen.dart';
+import '../sign_to_text/sign_to_text_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -55,58 +54,23 @@ class DashboardScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        Consumer<NotificationProvider>(
-                          builder: (_, notes, __) {
-                            final unread = notes.unreadCount;
-                            return GestureDetector(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                              ),
-                              child: Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  color: isLight
-                                      ? LightColors.primaryLight
-                                      : AppColors.surface2,
-                                  borderRadius: BorderRadius.circular(13),
-                                  border: Border.all(
-                                    color: isLight ? LightColors.border : AppColors.border,
-                                  ),
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.notifications_none_rounded,
-                                      color: primary,
-                                      size: 20,
-                                    ),
-                                    if (unread > 0)
-                                      Positioned(
-                                        right: 6,
-                                        top: 6,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.redAccent,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                                          child: Center(
-                                            child: Text(
-                                              unread > 9 ? '9+' : '$unread',
-                                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: isLight
+                                ? LightColors.primaryLight
+                                : AppColors.surface2,
+                            borderRadius: BorderRadius.circular(13),
+                            border: Border.all(
+                              color: isLight ? LightColors.border : AppColors.border,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.notifications_none_rounded,
+                            color: primary,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),

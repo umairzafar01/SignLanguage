@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -222,7 +223,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   Text('Text to Sign', style: AppTextStyles.heading(size: 17)),
                   const Spacer(),
                   if (_playing)
-                    StatusBadge(label: 'PLAYING', color: AppColors.rose, pulsing: true),
+                    const StatusBadge(label: 'PLAYING', color: AppColors.rose, pulsing: true),
                 ],
               ),
             ),
@@ -235,7 +236,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.rose.withOpacity(0.25)),
+                    border: Border.all(color: AppColors.rose.withValues(alpha: 0.25)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,14 +325,14 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: on
-                              ? AppColors.rose.withOpacity(0.1)
+                            color: on
+                              ? AppColors.rose.withValues(alpha: 0.1)
                               : AppColors.surface,
                           borderRadius: BorderRadius.circular(100),
                           border: Border.all(
                             color: on
-                                ? AppColors.rose.withOpacity(0.3)
-                                : AppColors.border,
+                              ? AppColors.rose.withValues(alpha: 0.3)
+                              : AppColors.border,
                           ),
                         ),
                         child: Text(e.value,
@@ -371,7 +372,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        AppColors.rose.withOpacity(0.04),
+                        AppColors.rose.withValues(alpha: 0.04),
                         Colors.transparent,
                       ],
                     ),
@@ -393,22 +394,30 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      AppColors.rose.withOpacity(0.15),
-                                      AppColors.rose.withOpacity(0.04),
+                                      AppColors.rose.withValues(alpha: 0.15),
+                                      AppColors.rose.withValues(alpha: 0.04),
                                     ],
                                   ),
-                                  border: Border.all(
-                                      color: AppColors.rose.withOpacity(0.25)),
+                                    border: Border.all(
+                                      color: AppColors.rose.withValues(alpha: 0.25)),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.rose.withOpacity(0.12),
+                                      color: AppColors.rose.withValues(alpha: 0.12),
                                       blurRadius: 32,
                                     ),
                                   ],
                                 ),
-                                child: currentAsset == null
-                                    ? const Icon(Icons.sign_language_rounded,
-                                        color: AppColors.rose, size: 42)
+                                child: kIsWeb || currentAsset == null
+                                    ? Container(
+                                        color: AppColors.surface2,
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          currentChar,
+                                          style: AppTextStyles.subheading(
+                                            color: AppColors.rose,
+                                          ),
+                                        ),
+                                      )
                                     : ClipRRect(
                                         borderRadius: BorderRadius.circular(22),
                                         child: Image.asset(
@@ -460,7 +469,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                                   color: done
                                       ? AppColors.rose
                                       : cur
-                                          ? AppColors.rose.withOpacity(0.5)
+                                                  ? AppColors.rose.withValues(alpha: 0.5)
                                           : AppColors.surface3,
                                   borderRadius: BorderRadius.circular(1),
                                 ),
@@ -503,7 +512,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.rose.withOpacity(0.3),
+                            color: AppColors.rose.withValues(alpha: 0.3),
                             blurRadius: 24, offset: const Offset(0, 6),
                           ),
                         ],
