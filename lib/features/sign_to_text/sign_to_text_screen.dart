@@ -75,9 +75,22 @@ class _SignToTextScreenState extends State<SignToTextScreen>
       return;
     }
 
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+    // Camera only supported on Android and iOS (not Web)
+    if (kIsWeb) {
       _cameraSupported = false;
-      _status = 'Live hand tracking is currently supported on Android only.';
+      _status = 'Camera not available on web. Use Android or iOS.';
+      if (mounted) {
+        setState(() {
+          _isReady = true;
+        });
+      }
+      return;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.iOS) {
+      _cameraSupported = false;
+      _status = 'Camera not supported on this platform.';
       if (mounted) {
         setState(() {
           _isReady = true;
@@ -113,15 +126,37 @@ class _SignToTextScreenState extends State<SignToTextScreen>
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.yuv420,
       );
-      await _cameraController!.initialize();
+      
+      try {
+        await _cameraController!.initialize();
+      } catch (e) {
+        print('Camera initialization error: $e');
+        _status = 'Camera error: $e';
+        if (mounted) setState(() => _isReady = true);
+        return;
+      }
 
-      _handLandmarker = HandLandmarkerPlugin.create(
-        numHands: 2,
-        minHandDetectionConfidence: 0.7,
-        delegate: HandLandmarkerDelegate.cpu,
-      );
+      try {
+        _handLandmarker = HandLandmarkerPlugin.create(
+          numHands: 2,
+          minHandDetectionConfidence: 0.7,
+          delegate: HandLandmarkerDelegate.cpu,
+        );
+      } catch (e) {
+        print('Hand landmarker initialization error: $e');
+        _status = 'Hand detection unavailable: $e';
+        if (mounted) setState(() => _isReady = true);
+        return;
+      }
 
-      await _cameraController!.startImageStream(_processCameraImage);
+      try {
+        await _cameraController!.startImageStream(_processCameraImage);
+      } catch (e) {
+        print('Image stream error: $e');
+        _status = 'Camera stream error: $e';
+        if (mounted) setState(() => _isReady = true);
+        return;
+      }
 
       if (!mounted) return;
       setState(() {
@@ -129,12 +164,13 @@ class _SignToTextScreenState extends State<SignToTextScreen>
         _isReady = true;
         _status = 'Camera ready';
       });
-    } catch (_) {
+    } catch (e) {
+      print('Camera setup error: $e');
       if (!mounted) return;
       setState(() {
         _cameraSupported = false;
         _isReady = true;
-        _status = 'Camera setup failed';
+        _status = 'Camera setup failed: $e';
       });
     }
   }
@@ -768,7 +804,7 @@ class _CameraPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final message = !supported
-        ? 'Live capture is Android only in this build.'
+        ? 'Camera not supported on this platform.'
         : !modelReady
             ? 'Loading dataset...'
             : ready
@@ -787,8 +823,17 @@ class _CameraPlaceholder extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             message,
+            textAlign: TextAlign.center,
             style: AppTextStyles.caption(color: AppColors.text2),
           ),
+          const SizedBox(height: 8),
+          if (!supported)
+            Text(
+              'Android, iOS, or native desktop recommended',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.caption(color: AppColors.text3)
+                  .copyWith(fontSize: 10),
+            ),
         ],
       ),
     );
